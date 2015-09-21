@@ -22,7 +22,8 @@ WORKDIR /root
 
 RUN sudo apt-get update -y && \
     sudo apt-get install  -y --no-install-recommends \
-    ca-certificates  build-essential libicu-dev libmozjs185-dev libcurl4-openssl-dev wget git-core
+    curl ca-certificates  build-essential libicu-dev libmozjs185-dev libcurl4-openssl-dev wget git-core
+
 
 RUN wget http://mirrors.advancedhosters.com/apache/couchdb/source/${COUCHDB_VERSION}/apache-couchdb-${COUCHDB_VERSION}.tar.gz &&\
     tar -zxvf apache-couchdb-*.tar.gz && \
@@ -43,6 +44,14 @@ RUN sudo chown -R couchdb:couchdb /usr/local/var/lib/couchdb &&\
 
 # Expose to the outside
 RUN sed -e 's/^bind_address = .*$/bind_address = 0.0.0.0/' -i /usr/local/etc/couchdb/default.ini
+
+# grab gosu for easy step-down from root
+RUN gpg --keyserver pool.sks-keyservers.net --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4 \
+  && curl -o /usr/local/bin/gosu -SL "https://github.com/tianon/gosu/releases/download/1.2/gosu-$(dpkg --print-architecture)" \
+  && curl -o /usr/local/bin/gosu.asc -SL "https://github.com/tianon/gosu/releases/download/1.2/gosu-$(dpkg --print-architecture).asc" \
+  && gpg --verify /usr/local/bin/gosu.asc \
+  && rm /usr/local/bin/gosu.asc \
+  && chmod +x /usr/local/bin/gosu
 
 COPY ./docker-entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
@@ -79,14 +88,6 @@ CMD ["couchdb"]
   #&& apt-get autoremove -y \
   #&& apt-get update && apt-get install -y libicu48 --no-install-recommends \
   #&& rm -rf /var/lib/apt/lists/* /usr/src/couchdb /couchdb.tar.gz* /KEYS /esl.deb
-
-## grab gosu for easy step-down from root
-#RUN gpg --keyserver pool.sks-keyservers.net --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4 \
-  #&& curl -o /usr/local/bin/gosu -SL "https://github.com/tianon/gosu/releases/download/1.2/gosu-$(dpkg --print-architecture)" \
-  #&& curl -o /usr/local/bin/gosu.asc -SL "https://github.com/tianon/gosu/releases/download/1.2/gosu-$(dpkg --print-architecture).asc" \
-  #&& gpg --verify /usr/local/bin/gosu.asc \
-  #&& rm /usr/local/bin/gosu.asc \
-  #&& chmod +x /usr/local/bin/gosu
 
 ## permissions
 #RUN chown -R couchdb:couchdb \

@@ -14,7 +14,7 @@ FROM ivlis/docker-erlang:OTP-17
 
 MAINTAINER ivlis
 
-ENV COUCHDB_VERSION 1.6.1
+ENV COUCHDB_VERSION 1.6.x
 
 RUN sudo adduser --disabled-login --disabled-password --no-create-home --gecos "" couchdb
 
@@ -22,14 +22,21 @@ WORKDIR /root
 
 RUN sudo apt-get update -y && \
     sudo apt-get install  -y --no-install-recommends \
-    curl ca-certificates  build-essential libicu-dev libmozjs185-dev libcurl4-openssl-dev wget git-core
+    curl ca-certificates  build-essential autotools-dev autoconf automake \
+    libicu-dev libmozjs185-dev libcurl4-openssl-dev git-core
 
 
-RUN wget http://mirrors.advancedhosters.com/apache/couchdb/source/${COUCHDB_VERSION}/apache-couchdb-${COUCHDB_VERSION}.tar.gz &&\
-    tar -zxvf apache-couchdb-*.tar.gz && \
-    cd apache* && \
+RUN git clone https://github.com/apache/couchdb.git
+
+
+RUN apt-get install  -y --no-install-recommends libtool autoconf-archive
+
+RUN cd couchdb && \
+    git checkout ${COUCHDB_VERSION} && \
+    /bin/sh bootstrap && \
     ./configure --with-erlang=/opt/erlang/lib/erlang/usr/include/ && \
-    make && sudo make install
+    make && sudo make install && \
+    cd .. && rm -rf couchdb
 
 RUN sudo chown -R couchdb:couchdb /usr/local/var/lib/couchdb &&\
     sudo chown -R couchdb:couchdb /usr/local/var/log/couchdb &&\

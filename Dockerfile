@@ -20,23 +20,27 @@ RUN sudo adduser --disabled-login --disabled-password --no-create-home --gecos "
 
 WORKDIR /root
 
-RUN sudo apt-get update -y && \
-    sudo apt-get install  -y --no-install-recommends \
+RUN apt-get update -y && \
+    apt-get install  -y --no-install-recommends \
     curl ca-certificates  build-essential autotools-dev autoconf automake \
-    libicu-dev libmozjs185-dev libcurl4-openssl-dev git-core
-
-
-RUN git clone https://github.com/apache/couchdb.git
-
-
-RUN apt-get install  -y --no-install-recommends libtool autoconf-archive
-
-RUN cd couchdb && \
+    libicu-dev libmozjs185-dev libcurl4-openssl-dev git-core \
+    libtool autoconf-archive && \
+    git clone https://github.com/apache/couchdb.git && \
+    cd couchdb && \
     git checkout ${COUCHDB_VERSION} && \
     /bin/sh bootstrap && \
     ./configure --with-erlang=/opt/erlang/lib/erlang/usr/include/ && \
     make && sudo make install && \
-    cd .. && rm -rf couchdb
+    cd .. && rm -rf couchdb && \
+    apt-get purge -y \
+    curl ca-certificates  build-essential autotools-dev autoconf automake \
+    libicu-dev libmozjs185-dev libcurl4-openssl-dev git-core \
+    libtool autoconf-archive && \
+    apt-get autoremove -y && \
+    apt-get install -y --no-install-recommends \
+    libmozjs185-1.0 curl openssl libicu52 && \
+    apt-get clean
+
 
 RUN sudo chown -R couchdb:couchdb /usr/local/var/lib/couchdb &&\
     sudo chown -R couchdb:couchdb /usr/local/var/log/couchdb &&\
@@ -53,12 +57,12 @@ RUN sudo chown -R couchdb:couchdb /usr/local/var/lib/couchdb &&\
 RUN sed -e 's/^bind_address = .*$/bind_address = 0.0.0.0/' -i /usr/local/etc/couchdb/default.ini
 
 # grab gosu for easy step-down from root
-RUN gpg --keyserver pool.sks-keyservers.net --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4 \
-  && curl -o /usr/local/bin/gosu -SL "https://github.com/tianon/gosu/releases/download/1.2/gosu-$(dpkg --print-architecture)" \
-  && curl -o /usr/local/bin/gosu.asc -SL "https://github.com/tianon/gosu/releases/download/1.2/gosu-$(dpkg --print-architecture).asc" \
-  && gpg --verify /usr/local/bin/gosu.asc \
-  && rm /usr/local/bin/gosu.asc \
-  && chmod +x /usr/local/bin/gosu
+#RUN gpg --keyserver pool.sks-keyservers.net --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4 \
+  #&& curl -o /usr/local/bin/gosu -SL "https://github.com/tianon/gosu/releases/download/1.2/gosu-$(dpkg --print-architecture)" \
+  #&& curl -o /usr/local/bin/gosu.asc -SL "https://github.com/tianon/gosu/releases/download/1.2/gosu-$(dpkg --print-architecture).asc" \
+  #&& gpg --verify /usr/local/bin/gosu.asc \
+  #&& rm /usr/local/bin/gosu.asc \
+  #&& chmod +x /usr/local/bin/gosu
 
 COPY ./docker-entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh

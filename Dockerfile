@@ -10,7 +10,7 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-FROM ivlis/docker-erlang:OTP-17
+FROM ivlis/docker-erlang:OTP-18
 
 MAINTAINER ivlis
 
@@ -64,5 +64,3 @@ WORKDIR /var/lib/couchdb
 
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["couchdb"]
-
-
